@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Smart Campus Management Console</title>
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard-sidebar {
+      background-color: #0f172a;
+      min-height: calc(100vh - 70px);
+      color: #94a3b8;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+    .sidebar-link i {
+      font-size: 1.25rem;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- Dynamic Role-Aware Navbar -->
+  <nav id="mainNavbar"></nav>
+
+  <div class="container-fluid">
+    <div class="row">
+
+      <!-- Role-Specific Sidebar Navigation -->
+      <aside class="col-lg-2 col-md-3 d-none d-md-block dashboard-sidebar py-4 px-3">
+        <div class="text-center mb-4">
+          <div class="stat-icon bg-danger bg-opacity-20 text-danger mx-auto mb-2" style="width: 56px; height: 56px;">
+            <i class="bi bi-shield-lock-fill fs-3"></i>
+          </div>
+          <h6 class="fw-bold text-white mb-0">Admin Console</h6>
+          <span class="badge bg-danger text-white small">Campus Administrator</span>
+        </div>
+
+        <nav class="nav flex-column gap-1">
+          <a class="sidebar-link active" href="#overviewSection" onclick="showSection('overviewSection')">
+            <i class="bi bi-speedometer2"></i> System Metrics
+          </a>
+          <a class="sidebar-link d-flex justify-content-between" href="#organizerApprovalsSection" onclick="showSection('organizerApprovalsSection')">
+            <span><i class="bi bi-person-check me-2"></i> Organizer Approvals</span>
+            <span class="badge bg-warning text-dark" id="sidebarPendingOrgBadge">0</span>
+          </a>
+          <a class="sidebar-link d-flex justify-content-between" href="#eventApprovalsSection" onclick="showSection('eventApprovalsSection')">
+            <span><i class="bi bi-calendar-check me-2"></i> Event Proposals</span>
+            <span class="badge bg-danger text-white" id="sidebarPendingEvtBadge">0</span>
+          </a>
+          <a class="sidebar-link" href="#userManagementSection" onclick="showSection('userManagementSection')">
+            <i class="bi bi-people"></i> User Directory
+          </a>
+          <a class="sidebar-link" href="#allEventsSection" onclick="showSection('allEventsSection')">
+            <i class="bi bi-grid"></i> All Campus Events
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Main Workspace -->
+      <main class="col-lg-10 col-md-9 ms-auto p-4">
+
+        <!-- Welcome Banner -->
+        <div class="card card-modern border-0 bg-white mb-4 p-4 shadow-sm">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+              <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-1 rounded-pill fw-semibold mb-2">
+                <i class="bi bi-shield-shaded me-1"></i> Central Governance Console
+              </span>
+              <h3 class="fw-bold mb-1" id="adminWelcomeTitle">Campus Administration Dashboard</h3>
+              <p class="text-muted small mb-0">
+                Manage student/organizer accounts, approve organizer permissions, moderate event proposals, and view real-time platform metrics.
+              </p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary" onclick="loadAdminDashboard()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards (MongoDB Aggregation) -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Total Students</span>
+                <h3 class="fw-bold mt-1 mb-0" id="statStudents">0</h3>
+                <small class="text-success"><i class="bi bi-mortarboard me-1"></i> Active participants</small>
+              </div>
+              <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-mortarboard-fill"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Pending Organizers</span>
+                <h3 class="fw-bold mt-1 mb-0 text-warning" id="statPendingOrg">0</h3>
+                <small class="text-muted" id="statApprovedOrgSub">0 Approved</small>
+              </div>
+              <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-person-fill-exclamation"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Pending Event Proposals</span>
+                <h3 class="fw-bold mt-1 mb-0 text-danger" id="statPendingEvents">0</h3>
+                <small class="text-muted" id="statApprovedEvtSub">0 Approved</small>
+              </div>
+              <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-calendar-event"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Total Event Bookings</span>
+                <h3 class="fw-bold mt-1 mb-0 text-primary" id="statRegistrations">0</h3>
+                <small class="text-info"><i class="bi bi-ticket-perforated me-1"></i> Issued QR passes</small>
+              </div>
+              <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-qr-code"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Organizer Approvals -->
+        <div id="organizerApprovalsSection" class="dashboard-section mb-5">
+          <div class="card card-modern border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+              <div>
+                <h5 class="fw-bold mb-0">
+                  <i class="bi bi-person-check-fill text-warning me-2"></i> Pending Organizer Account Requests
+                </h5>
+                <small class="text-muted">Review clubs and societies requesting event management authority.</small>
+              </div>
+              <span class="badge bg-warning text-dark px-3 py-2 fw-bold" id="badgePendingOrgCount">0 Pending</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Organizer / Representative</th>
+                      <th>Organization / Club Name</th>
+                      <th>Official Email</th>
+                      <th>Department</th>
+                      <th>Registration Date</th>
+                      <th class="text-end">Administrative Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pendingOrganizersTbody">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">Loading pending organizer accounts...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Event Proposals Review -->
+        <div id="eventApprovalsSection" class="dashboard-section mb-5">
+          <div class="card card-modern border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+              <div>
+                <h5 class="fw-bold mb-0">
+                  <i class="bi bi-calendar-check text-danger me-2"></i> Pending Event Proposals Queue
+                </h5>
+                <small class="text-muted">Events awaiting dean/admin clearance before publishing.</small>
+              </div>
+              <span class="badge bg-danger text-white px-3 py-2 fw-bold" id="badgePendingEvtCount">0 Proposals</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Event Title</th>
+                      <th>Organizer / Club</th>
+                      <th>Category</th>
+                      <th>Proposed Date & Time</th>
+                      <th>Venue</th>
+                      <th>Seats</th>
+                      <th class="text-end">Approval Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pendingEventsTbody">
+                    <tr>
+                      <td colspan="7" class="text-center py-4 text-muted">Loading event proposals...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: User Directory -->
+        <div id="userManagementSection" class="dashboard-section mb-5">
+          <div class="card card-modern border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <div>
+                <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Campus User Directory</h5>
+                <small class="text-muted">Manage active accounts, roles, and access statuses.</small>
+              </div>
+              <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" id="userRoleFilter" onchange="loadUsers()">
+                  <option value="">All Roles</option>
+                  <option value="student">Students</option>
+                  <option value="organizer">Organizers</option>
+                  <option value="admin">Administrators</option>
+                </select>
+                <input type="text" class="form-control form-control-sm" id="userSearchInput" placeholder="Search name or email..." onkeyup="loadUsers()">
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th>Role</th>
+                      <th>Organization / Dept</th>
+                      <th>Approval Status</th>
+                      <th>Account Status</th>
+                      <th class="text-end">Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody id="usersDirectoryTbody">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">Loading user directory...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: All Events Overview -->
+        <div id="allEventsSection" class="dashboard-section mb-5">
+          <div class="card card-modern border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+              <h5 class="fw-bold mb-0"><i class="bi bi-grid-fill text-secondary me-2"></i> All Campus Events</h5>
+              <select class="form-select form-select-sm w-auto" id="allEventsStatusFilter" onchange="loadAllEvents()">
+                <option value="">All Statuses</option>
+                <option value="APPROVED">Approved Only</option>
+                <option value="PENDING">Pending Only</option>
+                <option value="REJECTED">Rejected Only</option>
+              </select>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Event</th>
+                      <th>Organizer</th>
+                      <th>Category</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Bookings</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allEventsTbody">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">Loading all events...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Shared JS Helpers -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    function showSection(sectionId) {
+      document.querySelectorAll('.dashboard-section').forEach(sec => sec.style.display = 'none');
+      const target = document.getElementById(sectionId);
+      if (target) target.style.display = 'block';
+
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${sectionId}`);
+      });
+    }
+
+    async function loadAdminDashboard() {
+      // 1. Load Aggregated Stats
+      const statRes = await apiRequest('/admin/stats');
+      if (statRes && statRes.success && statRes.stats) {
+        const s = statRes.stats;
+        document.getElementById('statStudents').textContent = s.totalStudents;
+        document.getElementById('statPendingOrg').textContent = s.pendingApprovals;
+        document.getElementById('statApprovedOrgSub').textContent = `${s.approvedOrganizers} Approved`;
+        document.getElementById('statPendingEvents').textContent = s.pendingEvents;
+        document.getElementById('statApprovedEvtSub').textContent = `${s.approvedEvents} Approved`;
+        document.getElementById('statRegistrations').textContent = s.totalRegistrations;
+
+        document.getElementById('sidebarPendingOrgBadge').textContent = s.pendingApprovals;
+        document.getElementById('badgePendingOrgCount').textContent = `${s.pendingApprovals} Pending`;
+        document.getElementById('sidebarPendingEvtBadge').textContent = s.pendingEvents;
+        document.getElementById('badgePendingEvtCount').textContent = `${s.pendingEvents} Proposals`;
+      }
+
+      // 2. Load Pending Organizers
+      await loadPendingOrganizers();
+
+      // 3. Load Pending Events
+      await loadPendingEvents();
+
+      // 4. Load Users
+      await loadUsers();
+
+      // 5. Load All Events
+      await loadAllEvents();
+    }
+
+    // Load Pending Organizer Requests
+    async function loadPendingOrganizers() {
+      const tbody = document.getElementById('pendingOrganizersTbody');
+      const res = await apiRequest('/admin/pending-organizers');
+
+      if (res && res.success) {
+        const organizers = res.organizers || [];
+        if (organizers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                <i class="bi bi-check-circle text-success fs-3 d-block mb-1"></i>
+                No pending organizer applications. All organizer accounts have been reviewed!
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = organizers.map(org => `
+          <tr>
+            <td>
+              <div class="fw-bold">${org.name}</div>
+              <small class="text-muted">Tel: ${org.phone || 'N/A'}</small>
+            </td>
+            <td><strong class="text-primary">${org.organizationName || 'Campus Club'}</strong></td>
+            <td><code>${org.email}</code></td>
+            <td><span class="badge bg-light text-dark">${org.department?.name || 'General'}</span></td>
+            <td><span class="small">${formatDate(org.createdAt)}</span></td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-success me-1 fw-semibold" onclick="reviewOrganizer('${org._id}', 'APPROVED', '${org.name}')">
+                <i class="bi bi-check-lg"></i> Approve
+              </button>
+              <button class="btn btn-sm btn-outline-danger fw-semibold" onclick="reviewOrganizer('${org._id}', 'REJECTED', '${org.name}')">
+                <i class="bi bi-x-lg"></i> Reject
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">${res?.message || 'Error loading organizers'}</td></tr>`;
+      }
+    }
+
+    // Approve or Reject Organizer Account
+    async function reviewOrganizer(userId, status, name) {
+      let rejectionReason = '';
+      if (status === 'REJECTED') {
+        rejectionReason = prompt(`Enter reason for rejecting organizer "${name}":`);
+        if (rejectionReason === null) return; // user cancelled prompt
+        if (!rejectionReason.trim()) {
+          showToast('A rejection reason is required.', 'warning');
+          return;
+        }
+      } else {
+        if (!confirm(`Are you sure you want to APPROVE organizer "${name}"? This unlocks event creation permissions.`)) return;
+      }
+
+      setLoading(true, `Updating organizer status to ${status}...`);
+      const res = await apiRequest(`/admin/organizers/${userId}/approval`, {
+        method: 'PATCH',
+        body: { status, rejectionReason }
+      });
+      setLoading(false);
+
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        loadAdminDashboard();
+      } else {
+        showToast(res?.message || 'Failed to update organizer', 'danger');
+      }
+    }
+
+    // Load Pending Event Proposals
+    async function loadPendingEvents() {
+      const tbody = document.getElementById('pendingEventsTbody');
+      const res = await apiRequest('/events/admin/pending');
+
+      if (res && res.success) {
+        const events = res.events || [];
+        if (events.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="bi bi-calendar-check text-success fs-3 d-block mb-1"></i>
+                No pending event proposals awaiting review.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = events.map(evt => `
+          <tr>
+            <td>
+              <div class="fw-bold">${evt.title}</div>
+              <small class="text-muted">${evt.description ? evt.description.substring(0, 60) + '...' : ''}</small>
+            </td>
+            <td>
+              <div class="fw-semibold">${evt.organizer?.name || 'Organizer'}</div>
+              <small class="text-muted">${evt.organizer?.email || ''}</small>
+            </td>
+            <td><span class="badge bg-light text-dark">${evt.category?.name || 'General'}</span></td>
+            <td><span class="small">${formatDateTime(evt.eventDate)}</span></td>
+            <td><span class="small">${evt.venue}</span></td>
+            <td><span class="badge bg-info text-dark">${evt.seatLimit} seats</span></td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-success me-1 fw-semibold" onclick="reviewEvent('${evt._id}', 'APPROVED', '${evt.title}')">
+                <i class="bi bi-check-lg"></i> Approve
+              </button>
+              <button class="btn btn-sm btn-outline-danger fw-semibold" onclick="reviewEvent('${evt._id}', 'REJECTED', '${evt.title}')">
+                <i class="bi bi-x-lg"></i> Reject
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">${res?.message || 'Error loading events'}</td></tr>`;
+      }
+    }
+
+    // Approve or Reject Event Proposal
+    async function reviewEvent(eventId, status, title) {
+      let rejectionReason = '';
+      if (status === 'REJECTED') {
+        rejectionReason = prompt(`Enter rejection reason for event "${title}":`);
+        if (rejectionReason === null) return;
+        if (!rejectionReason.trim()) {
+          showToast('A rejection reason is required.', 'warning');
+          return;
+        }
+      } else {
+        if (!confirm(`Confirm approval for event "${title}"? It will immediately appear on the Student catalog.`)) return;
+      }
+
+      setLoading(true, `Processing event ${status.toLowerCase()}...`);
+      const res = await apiRequest(`/events/${eventId}/review`, {
+        method: 'PATCH',
+        body: { status, rejectionReason }
+      });
+      setLoading(false);
+
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        loadAdminDashboard();
+      } else {
+        showToast(res?.message || 'Failed to review event', 'danger');
+      }
+    }
+
+    // Load User Directory
+    async function loadUsers() {
+      const role = document.getElementById('userRoleFilter').value;
+      const search = document.getElementById('userSearchInput').value.trim();
+      const tbody = document.getElementById('usersDirectoryTbody');
+
+      let query = `?`;
+      if (role) query += `role=${role}&`;
+      if (search) query += `search=${encodeURIComponent(search)}&`;
+
+      const res = await apiRequest(`/admin/users${query}`);
+      if (res && res.success) {
+        const users = res.users || [];
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No users found matching query.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = users.map(u => {
+          const roleClass = {
+            admin: 'bg-danger text-white',
+            organizer: 'bg-warning text-dark',
+            student: 'bg-success text-white'
+          }[u.role] || 'bg-secondary';
+
+          let approvalBadge = '';
+          if (u.role === 'organizer') {
+            if (u.approvalStatus === 'APPROVED') approvalBadge = '<span class="badge bg-success">Approved</span>';
+            else if (u.approvalStatus === 'PENDING') approvalBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+            else approvalBadge = '<span class="badge bg-danger">Rejected</span>';
+          } else {
+            approvalBadge = '<span class="badge bg-light text-muted">Auto</span>';
+          }
+
+          return `
+            <tr>
+              <td>
+                <div class="fw-bold">${u.name}</div>
+                <small class="text-muted">${u.email}</small>
+              </td>
+              <td><span class="badge ${roleClass} text-uppercase">${u.role}</span></td>
+              <td>
+                <div>${u.organizationName || u.department?.name || 'Campus Wide'}</div>
+              </td>
+              <td>${approvalBadge}</td>
+              <td>
+                <span class="badge ${u.isActive ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}">
+                  ${u.isActive ? 'Active' : 'Suspended'}
+                </span>
+              </td>
+              <td class="text-end">
+                ${u.role !== 'admin' ? `
+                  <button class="btn btn-sm ${u.isActive ? 'btn-outline-danger' : 'btn-outline-success'}" onclick="toggleUserStatus('${u._id}', '${u.name}')">
+                    ${u.isActive ? 'Suspend' : 'Activate'}
+                  </button>
+                ` : '<span class="text-muted small">Protected</span>'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    async function toggleUserStatus(userId, name) {
+      if (!confirm(`Toggle active/suspended status for "${name}"?`)) return;
+
+      const res = await apiRequest(`/admin/users/${userId}/toggle-status`, { method: 'PATCH' });
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        loadUsers();
+      } else {
+        showToast(res?.message || 'Failed to update status', 'danger');
+      }
+    }
+
+    // Load All Events
+    async function loadAllEvents() {
+      const status = document.getElementById('allEventsStatusFilter').value;
+      const tbody = document.getElementById('allEventsTbody');
+      let query = status ? `?status=${status}` : '';
+
+      const res = await apiRequest(`/admin/events${query}`);
+      if (res && res.success) {
+        const events = res.events || [];
+        if (events.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No events recorded.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = events.map(evt => `
+          <tr>
+            <td>
+              <div class="fw-bold">${evt.title}</div>
+              <small class="text-muted">${evt.venue}</small>
+            </td>
+            <td>${evt.organizer?.name || 'Club'}</td>
+            <td><span class="badge bg-light text-dark">${evt.category?.name || 'General'}</span></td>
+            <td><span class="small">${formatDate(evt.eventDate)}</span></td>
+            <td>
+              <span class="badge ${evt.status === 'APPROVED' ? 'bg-success' : evt.status === 'PENDING' ? 'bg-warning text-dark' : 'bg-danger'}">
+                ${evt.status}
+              </span>
+            </td>
+            <td>${evt.registeredCount || 0} / ${evt.seatLimit}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (requireAuth(['admin'])) {
+        loadAdminDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

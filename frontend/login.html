@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Smart Campus Event Management System</title>
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+  <!-- Dynamic Role-Aware Navbar -->
+  <nav id="mainNavbar"></nav>
+
+  <main class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
+
+        <div class="text-center mb-4">
+          <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">
+            <i class="bi bi-shield-check me-1"></i> Multi-Role Portal Authentication
+          </span>
+          <h2 class="fw-bold">Sign In to Smart Campus</h2>
+          <p class="text-muted small">Choose your role below to access your dedicated campus dashboard.</p>
+        </div>
+
+        <div class="card card-modern shadow-lg border-0 overflow-hidden">
+          <!-- Role Selection Tabs -->
+          <div class="bg-light border-bottom p-2">
+            <ul class="nav nav-pills nav-fill gap-2" id="roleTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold" 
+                        id="student-tab" data-bs-toggle="pill" data-bs-target="#student-panel" type="button" role="tab">
+                  <i class="bi bi-mortarboard-fill text-success"></i>
+                  <span>Student</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold" 
+                        id="organizer-tab" data-bs-toggle="pill" data-bs-target="#organizer-panel" type="button" role="tab">
+                  <i class="bi bi-kanban-fill text-warning"></i>
+                  <span>Organizer</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold" 
+                        id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin-panel" type="button" role="tab">
+                  <i class="bi bi-shield-lock-fill text-danger"></i>
+                  <span>Admin</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body p-4 p-md-5">
+            <div class="tab-content" id="roleTabContent">
+
+              <!-- ========================================================
+                   STUDENT LOGIN PANEL
+                   ======================================================== -->
+              <div class="tab-pane fade show active" id="student-panel" role="tabpanel">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                  <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-mortarboard"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-0">Student Portal Login</h5>
+                    <p class="text-muted small mb-0">Register for events, claim passes, and track attendance.</p>
+                  </div>
+                </div>
+
+                <form id="studentLoginForm" onsubmit="handleLogin(event, 'student')">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Campus Email Address</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+                      <input type="email" class="form-control" id="studentEmail" placeholder="student@campus.com" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-key text-muted"></i></span>
+                      <input type="password" class="form-control" id="studentPassword" placeholder="••••••••" required>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold mb-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In as Student
+                  </button>
+
+                  <div class="text-center pt-2 border-top">
+                    <span class="text-muted small">New to Smart Campus?</span>
+                    <a href="register.html?role=student" class="text-success fw-bold small ms-1 text-decoration-none">
+                      Create Student Account
+                    </a>
+                  </div>
+                </form>
+
+                <!-- Quick Seed Credentials Helper -->
+                <div class="alert alert-light border mt-4 p-2 small d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-info-circle text-success me-1"></i> <strong>Seed Demo:</strong> alex.student@campus.com / Student@123</span>
+                  <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="fillCredentials('student', 'alex.student@campus.com', 'Student@123')">Fill</button>
+                </div>
+              </div>
+
+              <!-- ========================================================
+                   ORGANIZER LOGIN PANEL
+                   ======================================================== -->
+              <div class="tab-pane fade" id="organizer-panel" role="tabpanel">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                  <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-kanban"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-0">Organizer Portal Login</h5>
+                    <p class="text-muted small mb-0">Publish campus events, manage registrations & verify QR tickets.</p>
+                  </div>
+                </div>
+
+                <div class="alert alert-warning py-2 px-3 small mb-3">
+                  <i class="bi bi-shield-exclamation me-1"></i>
+                  <strong>Notice:</strong> New organizer accounts require Admin approval before event publishing privileges are granted.
+                </div>
+
+                <form id="organizerLoginForm" onsubmit="handleLogin(event, 'organizer')">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Club or Organizer Email</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+                      <input type="email" class="form-control" id="organizerEmail" placeholder="club@campus.com" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-key text-muted"></i></span>
+                      <input type="password" class="form-control" id="organizerPassword" placeholder="••••••••" required>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-warning btn-lg w-100 fw-semibold mb-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In as Organizer
+                  </button>
+
+                  <div class="text-center pt-2 border-top">
+                    <span class="text-muted small">Represent a new club or committee?</span>
+                    <a href="register.html?role=organizer" class="text-primary fw-bold small ms-1 text-decoration-none">
+                      Register Organizer Account
+                    </a>
+                  </div>
+                </form>
+
+                <!-- Quick Seed Credentials Helper -->
+                <div class="alert alert-light border mt-4 p-2 small">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span><i class="bi bi-check-circle text-success me-1"></i> <strong>Approved Demo:</strong> codingclub@campus.com / Organizer@123</span>
+                    <button class="btn btn-sm btn-outline-warning text-dark py-0 px-2" onclick="fillCredentials('organizer', 'codingclub@campus.com', 'Organizer@123')">Fill</button>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history text-warning me-1"></i> <strong>Pending Demo:</strong> robotics@campus.com / Organizer@123</span>
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="fillCredentials('organizer', 'robotics@campus.com', 'Organizer@123')">Fill</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ========================================================
+                   ADMIN LOGIN PANEL
+                   ======================================================== -->
+              <div class="tab-pane fade" id="admin-panel" role="tabpanel">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                  <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-shield-lock"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-0">Campus Administrator Login</h5>
+                    <p class="text-muted small mb-0">Review pending organizer approvals, approve events & view analytics.</p>
+                  </div>
+                </div>
+
+                <div class="alert alert-danger bg-danger bg-opacity-10 text-danger border-0 py-2 px-3 small mb-3">
+                  <i class="bi bi-lock-fill me-1"></i>
+                  <strong>Restricted Administrative Access:</strong> Public admin registration is disabled. Administrator accounts are pre-seeded securely via <code>npm run seed</code> using variables in <code>.env</code>.
+                </div>
+
+                <form id="adminLoginForm" onsubmit="handleLogin(event, 'admin')">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Administrator Email</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-person-badge text-muted"></i></span>
+                      <input type="email" class="form-control" id="adminEmail" placeholder="admin@campus.com" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Administrator Password</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white"><i class="bi bi-key text-muted"></i></span>
+                      <input type="password" class="form-control" id="adminPassword" placeholder="••••••••" required>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-danger btn-lg w-100 fw-semibold mb-3">
+                    <i class="bi bi-shield-check me-1"></i> Access Admin Console
+                  </button>
+                </form>
+
+                <!-- Quick Seed Credentials Helper -->
+                <div class="alert alert-light border mt-4 p-2 small d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-key-fill text-danger me-1"></i> <strong>Seed Admin:</strong> lungkamei85@gmail.com / lung1456</span>
+                  <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="fillCredentials('admin', 'lungkamei85@gmail.com', 'lung1456')">Fill</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Shared JS Helpers -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    // Quick Credential Autofill Helper for Testing
+    function fillCredentials(role, email, pass) {
+      if (role === 'student') {
+        document.getElementById('studentEmail').value = email;
+        document.getElementById('studentPassword').value = pass;
+      } else if (role === 'organizer') {
+        document.getElementById('organizerEmail').value = email;
+        document.getElementById('organizerPassword').value = pass;
+      } else if (role === 'admin') {
+        document.getElementById('adminEmail').value = email;
+        document.getElementById('adminPassword').value = pass;
+      }
+    }
+
+    // Unified Login Handler with Role Validation
+    async function handleLogin(e, expectedRole) {
+      e.preventDefault();
+      
+      let email = '';
+      let password = '';
+      if (expectedRole === 'student') {
+        email = document.getElementById('studentEmail').value.trim();
+        password = document.getElementById('studentPassword').value;
+      } else if (expectedRole === 'organizer') {
+        email = document.getElementById('organizerEmail').value.trim();
+        password = document.getElementById('organizerPassword').value;
+      } else if (expectedRole === 'admin') {
+        email = document.getElementById('adminEmail').value.trim();
+        password = document.getElementById('adminPassword').value;
+      }
+
+      setLoading(true, `Authenticating ${expectedRole}...`);
+      const response = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: { email, password, expectedRole }
+      });
+      setLoading(false);
+
+      if (response && response.success) {
+        saveAuth(response.token, response.user);
+        showToast(`Welcome, ${response.user.name}! Redirecting...`, 'success');
+        
+        // Automatic redirection to respective dashboard
+        setTimeout(() => {
+          if (response.user.role === 'admin') {
+            window.location.href = 'admin-dashboard.html';
+          } else if (response.user.role === 'organizer') {
+            window.location.href = 'organizer-dashboard.html';
+          } else {
+            window.location.href = 'student-dashboard.html';
+          }
+        }, 600);
+      } else {
+        showToast(response?.message || 'Login failed. Please check your credentials.', 'danger');
+      }
+    }
+
+    // On Load: Check if role query parameter exists (e.g. login.html?role=admin)
+    document.addEventListener('DOMContentLoaded', () => {
+      // If already logged in, redirect directly to dashboard
+      const user = getUser();
+      if (user) {
+        window.location.href = getDashboardUrl(user.role);
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get('role');
+      if (roleParam === 'admin') {
+        const adminTab = document.getElementById('admin-tab');
+        if (adminTab) {
+          const tab = new bootstrap.Tab(adminTab);
+          tab.show();
+        }
+      } else if (roleParam === 'organizer') {
+        const orgTab = document.getElementById('organizer-tab');
+        if (orgTab) {
+          const tab = new bootstrap.Tab(orgTab);
+          tab.show();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

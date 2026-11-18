@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizer Dashboard - Smart Campus Events</title>
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard-sidebar {
+      background-color: #ffffff;
+      border-right: 1px solid var(--border-color);
+      min-height: calc(100vh - 70px);
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      background-color: #fef3c7;
+      color: #b45309;
+    }
+    .sidebar-link i {
+      font-size: 1.25rem;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- Dynamic Role-Aware Navbar -->
+  <nav id="mainNavbar"></nav>
+
+  <div class="container-fluid">
+    <div class="row">
+
+      <!-- Role-Specific Sidebar Navigation -->
+      <aside class="col-lg-2 col-md-3 d-none d-md-block dashboard-sidebar py-4 px-3">
+        <div class="text-center mb-4">
+          <div class="stat-icon bg-warning bg-opacity-10 text-warning mx-auto mb-2" style="width: 56px; height: 56px;">
+            <i class="bi bi-kanban-fill fs-3"></i>
+          </div>
+          <h6 class="fw-bold mb-0" id="sidebarOrgName">Organizer Portal</h6>
+          <span class="badge bg-warning text-dark small" id="sidebarOrgStatusBadge">Pending Approval</span>
+        </div>
+
+        <nav class="nav flex-column gap-1">
+          <a class="sidebar-link active" href="#eventsSection" onclick="showSection('eventsSection')">
+            <i class="bi bi-calendar-event"></i> My Events
+          </a>
+          <a class="sidebar-link" href="#createEventSection" onclick="showCreateEventModal()">
+            <i class="bi bi-plus-circle"></i> Create Event
+          </a>
+          <a class="sidebar-link" href="#checkinSection" onclick="showSection('checkinSection')">
+            <i class="bi bi-person-check"></i> Venue Check-In
+          </a>
+          <a class="sidebar-link" href="#guidelinesSection" onclick="showSection('guidelinesSection')">
+            <i class="bi bi-journal-text"></i> Organizer Rules
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Main Workspace -->
+      <main class="col-lg-10 col-md-9 ms-auto p-4">
+
+        <!-- ACCOUNT APPROVAL STATUS BANNER (CRITICAL) -->
+        <div id="approvalBannerContainer" class="mb-4"></div>
+
+        <!-- Personalized Welcome Banner -->
+        <div class="card card-modern border-0 bg-white mb-4 p-4 shadow-sm">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+              <span class="badge bg-warning bg-opacity-20 text-dark px-3 py-1 rounded-pill fw-semibold mb-2">
+                <i class="bi bi-building me-1"></i> Club & Department Hub
+              </span>
+              <h3 class="fw-bold mb-1" id="welcomeOrgHeading">Welcome, Organizer!</h3>
+              <p class="text-muted small mb-0" id="welcomeOrgSubtitle">
+                Submit event proposals for administrative approval, view student registrations, and manage venue check-ins.
+              </p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-warning fw-semibold" id="btnHeaderCreateEvent" onclick="showCreateEventModal()">
+                <i class="bi bi-plus-circle me-1"></i> Propose New Event
+              </button>
+              <button class="btn btn-outline-primary" onclick="showSection('checkinSection')">
+                <i class="bi bi-qr-code-scan me-1"></i> Gate Check-In
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Total Events</span>
+                <h3 class="fw-bold mt-1 mb-0" id="statTotalEvents">0</h3>
+              </div>
+              <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-calendar3"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Approved & Active</span>
+                <h3 class="fw-bold mt-1 mb-0" id="statApprovedEvents">0</h3>
+              </div>
+              <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-check-circle"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Pending Admin Review</span>
+                <h3 class="fw-bold mt-1 mb-0" id="statPendingEvents">0</h3>
+              </div>
+              <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div>
+                <span class="text-muted small fw-semibold">Total Registrations</span>
+                <h3 class="fw-bold mt-1 mb-0" id="statTotalRegistrations">0</h3>
+              </div>
+              <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: My Events List -->
+        <div id="eventsSection" class="dashboard-section mb-5">
+          <div class="card card-modern border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+              <h5 class="fw-bold mb-0">
+                <i class="bi bi-kanban text-warning me-2"></i> Event Management & Status
+              </h5>
+              <button class="btn btn-sm btn-outline-secondary" onclick="loadOrganizerData()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Event Title</th>
+                      <th>Category</th>
+                      <th>Scheduled Date</th>
+                      <th>Venue</th>
+                      <th>Approval Status</th>
+                      <th>Seats Booked</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="organizerEventsTbody">
+                    <tr>
+                      <td colspan="7" class="text-center py-4 text-muted">
+                        <span class="spinner-border spinner-border-sm me-2"></span> Loading organizer events...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Venue Gate Check-In Tool -->
+        <div id="checkinSection" class="dashboard-section mb-5" style="display: none;">
+          <div class="row g-4 justify-content-center">
+            <div class="col-lg-8">
+              <div class="card card-modern border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3 d-flex align-items-center justify-content-between">
+                  <h5 class="fw-bold mb-0">
+                    <i class="bi bi-qr-code-scan me-2"></i> Venue Gate Check-In Desk
+                  </h5>
+                  <span class="badge bg-light text-primary">Live Scanner</span>
+                </div>
+                <div class="card-body p-4">
+                  <p class="text-muted small">
+                    Type or scan the student's unique Ticket Pass ID (e.g. <code>EVT-1023-A7</code>) to authenticate entry and prevent duplicate admissions.
+                  </p>
+
+                  <form id="checkinForm" onsubmit="handleCheckin(event)" class="mb-4">
+                    <div class="input-group input-group-lg">
+                      <span class="input-group-text bg-white"><i class="bi bi-ticket-perforated text-muted"></i></span>
+                      <input type="text" class="form-control text-uppercase font-monospace fw-bold" id="checkinTicketInput" placeholder="ENTER TICKET ID (EVT-...)" required>
+                      <button type="submit" class="btn btn-primary px-4 fw-semibold" id="btnVerifyCheckin">
+                        <i class="bi bi-check2-circle me-1"></i> Verify Entry
+                      </button>
+                    </div>
+                  </form>
+
+                  <!-- Verification Result Display Box -->
+                  <div id="checkinResultBox"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Organizer Rules & Guidelines -->
+        <div id="guidelinesSection" class="dashboard-section mb-5" style="display: none;">
+          <div class="card card-modern border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-2"></i> Event Management Guidelines</h5>
+            <ul class="text-muted small mb-0 lh-lg">
+              <li><strong>Admin Review:</strong> All proposed events must be reviewed and approved by a Campus Administrator before appearing in the student catalog.</li>
+              <li><strong>Seat Limits:</strong> The registration engine uses atomic reservation to strictly guarantee zero overbooking.</li>
+              <li><strong>Venue Access:</strong> Only students with an active ticket can be checked in at the door.</li>
+              <li><strong>Duplicate Detection:</strong> The gate check-in tool rejects tickets that have already been scanned.</li>
+            </ul>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- CREATE EVENT MODAL -->
+  <div class="modal fade" id="createEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i> Submit New Event Proposal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="createEventForm" onsubmit="handleCreateEvent(event)">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Event Title <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="evtTitle" placeholder="e.g. Annual AI & Robotics Summit 2026" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                <select class="form-select" id="evtCategory" required>
+                  <option value="">Select category...</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Event Date & Time <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="evtDate" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Seat Capacity <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="evtSeatLimit" min="1" max="2000" placeholder="e.g. 100" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Venue / Hall Location <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="evtVenue" placeholder="e.g. Main Seminar Hall A, Ground Floor" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Event Description & Agendas <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="evtDescription" rows="4" placeholder="Detail the event objectives, speaker bios, and participant requirements..." required></textarea>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-warning fw-semibold text-dark">
+                <i class="bi bi-send me-1"></i> Submit for Admin Review
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTENDEE LIST MODAL -->
+  <div class="modal fade" id="attendeesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content border-0">
+        <div class="modal-header bg-light">
+          <div>
+            <h5 class="modal-title fw-bold" id="attendeesModalTitle">Registered Students</h5>
+            <small class="text-muted" id="attendeesModalSubtitle">Viewing participants</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="table-responsive" style="max-height: 480px;">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Student Name</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Ticket Pass ID</th>
+                  <th>Registration Date</th>
+                  <th>Venue Check-In</th>
+                </tr>
+              </thead>
+              <tbody id="attendeesTbody">
+                <tr>
+                  <td colspan="6" class="text-center py-4 text-muted">Loading attendees...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Shared JS Helpers -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    let organizerEvents = [];
+    let currentUser = null;
+
+    function showSection(sectionId) {
+      document.querySelectorAll('.dashboard-section').forEach(sec => sec.style.display = 'none');
+      const target = document.getElementById(sectionId);
+      if (target) target.style.display = 'block';
+
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${sectionId}`);
+      });
+    }
+
+    // Refresh Profile & Approval Status
+    async function refreshUserSession() {
+      const res = await apiRequest('/auth/me');
+      if (res && res.success && res.user) {
+        currentUser = res.user;
+        updateUserCache(currentUser);
+        renderApprovalBanner();
+      } else {
+        currentUser = getUser();
+        renderApprovalBanner();
+      }
+    }
+
+    // Render Prominent Account Approval Banner
+    function renderApprovalBanner() {
+      const container = document.getElementById('approvalBannerContainer');
+      const badge = document.getElementById('sidebarOrgStatusBadge');
+      const createBtn = document.getElementById('btnHeaderCreateEvent');
+      const status = currentUser?.approvalStatus || 'PENDING';
+
+      if (status === 'PENDING') {
+        badge.className = 'badge bg-warning text-dark small';
+        badge.textContent = 'Pending Approval';
+        container.innerHTML = `
+          <div class="alert alert-warning border-warning shadow-sm p-4 d-flex align-items-start gap-3">
+            <i class="bi bi-clock-history fs-2 text-warning flex-shrink-0"></i>
+            <div>
+              <h5 class="fw-bold mb-1">Organizer Account Under Administrative Review</h5>
+              <p class="mb-2 small">
+                Your organizer registration is currently in <strong>PENDING</strong> status. A campus administrator must verify and approve your club or department account before you can publish events or check in students.
+              </p>
+              <div class="badge bg-light text-dark border">
+                <i class="bi bi-shield-lock me-1"></i> Event Creation & Gate Check-In are temporarily locked until approved.
+              </div>
+            </div>
+          </div>
+        `;
+        if (createBtn) {
+          createBtn.classList.add('disabled');
+          createBtn.title = 'Account pending administrator approval';
+        }
+      } else if (status === 'REJECTED') {
+        badge.className = 'badge bg-danger text-white small';
+        badge.textContent = 'Application Rejected';
+        const reason = currentUser?.rejectionReason ? `Reason provided: "${currentUser.rejectionReason}"` : 'Please contact campus administration for details.';
+        container.innerHTML = `
+          <div class="alert alert-danger border-danger shadow-sm p-4 d-flex align-items-start gap-3">
+            <i class="bi bi-x-octagon-fill fs-2 text-danger flex-shrink-0"></i>
+            <div>
+              <h5 class="fw-bold mb-1">Organizer Application Rejected</h5>
+              <p class="mb-0 small">${reason}</p>
+            </div>
+          </div>
+        `;
+        if (createBtn) createBtn.classList.add('disabled');
+      } else {
+        badge.className = 'badge bg-success text-white small';
+        badge.textContent = 'Verified Organizer';
+        container.innerHTML = `
+          <div class="alert alert-success border-success bg-success bg-opacity-10 py-2 px-3 small d-flex align-items-center justify-content-between">
+            <div>
+              <i class="bi bi-patch-check-fill text-success me-2"></i>
+              <strong>Verified Organizer:</strong> Full event creation and live gate check-in features are active.
+            </div>
+            <span class="badge bg-success">Approved</span>
+          </div>
+        `;
+        if (createBtn) {
+          createBtn.classList.remove('disabled');
+          createBtn.title = '';
+        }
+      }
+    }
+
+    // Load Events and Stats
+    async function loadOrganizerData() {
+      await refreshUserSession();
+
+      document.getElementById('sidebarOrgName').textContent = currentUser?.organizationName || currentUser?.name || 'Organizer Portal';
+      document.getElementById('welcomeOrgHeading').textContent = `Welcome, ${currentUser?.name}!`;
+
+      // Load Categories for Modal
+      const catRes = await apiRequest('/events/categories');
+      if (catRes && catRes.success) {
+        const catSelect = document.getElementById('evtCategory');
+        catSelect.innerHTML = '<option value="">Select category...</option>';
+        catRes.categories.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c._id;
+          opt.textContent = c.name;
+          catSelect.appendChild(opt);
+        });
+      }
+
+      // Load Events
+      const res = await apiRequest('/events/organizer/mine');
+      if (res && res.success) {
+        organizerEvents = res.events || [];
+        renderOrganizerEvents();
+      }
+    }
+
+    function renderOrganizerEvents() {
+      const tbody = document.getElementById('organizerEventsTbody');
+      let approvedCount = 0;
+      let pendingCount = 0;
+      let totalRegistrations = 0;
+
+      organizerEvents.forEach(evt => {
+        if (evt.status === 'APPROVED') approvedCount++;
+        if (evt.status === 'PENDING') pendingCount++;
+        totalRegistrations += (evt.registeredCount || 0);
+      });
+
+      document.getElementById('statTotalEvents').textContent = organizerEvents.length;
+      document.getElementById('statApprovedEvents').textContent = approvedCount;
+      document.getElementById('statPendingEvents').textContent = pendingCount;
+      document.getElementById('statTotalRegistrations').textContent = totalRegistrations;
+
+      if (organizerEvents.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-plus fs-1 d-block mb-2 text-secondary"></i>
+              You haven't proposed any campus events yet. Click "Propose New Event" to get started!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = organizerEvents.map(evt => {
+        let statusBadge = '';
+        if (evt.status === 'APPROVED') {
+          statusBadge = '<span class="badge badge-status badge-approved"><i class="bi bi-check-circle me-1"></i> Approved</span>';
+        } else if (evt.status === 'PENDING') {
+          statusBadge = '<span class="badge badge-status badge-pending"><i class="bi bi-hourglass-split me-1"></i> Pending Review</span>';
+        } else if (evt.status === 'REJECTED') {
+          statusBadge = `<span class="badge badge-status badge-rejected" title="${evt.rejectionReason || ''}"><i class="bi bi-x-circle me-1"></i> Rejected</span>`;
+        } else {
+          statusBadge = '<span class="badge badge-status badge-cancelled">Cancelled</span>';
+        }
+
+        const seatsPercent = Math.min(100, Math.round(((evt.registeredCount || 0) / evt.seatLimit) * 100));
+
+        return `
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">${evt.title}</div>
+              <small class="text-muted">${evt.rejectionReason ? 'Reason: ' + evt.rejectionReason : ''}</small>
+            </td>
+            <td><span class="badge bg-light text-dark border">${evt.category?.name || 'General'}</span></td>
+            <td><span class="small">${formatDateTime(evt.eventDate)}</span></td>
+            <td><span class="small">${evt.venue}</span></td>
+            <td>${statusBadge}</td>
+            <td style="min-width: 140px;">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>${evt.registeredCount || 0} / ${evt.seatLimit}</span>
+                <span>${seatsPercent}%</span>
+              </div>
+              <div class="progress seats-progress">
+                <div class="progress-bar ${seatsPercent >= 100 ? 'bg-danger' : 'bg-primary'}" style="width: ${seatsPercent}%"></div>
+              </div>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary" onclick="viewAttendees('${evt._id}', '${evt.title}')">
+                <i class="bi bi-people me-1"></i> Attendees (${evt.registeredCount || 0})
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function showCreateEventModal() {
+      if (currentUser?.approvalStatus !== 'APPROVED') {
+        showToast('Your organizer account is pending Admin approval. You cannot propose events yet.', 'warning');
+        return;
+      }
+      const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+      modal.show();
+    }
+
+    async function handleCreateEvent(e) {
+      e.preventDefault();
+      const title = document.getElementById('evtTitle').value.trim();
+      const category = document.getElementById('evtCategory').value;
+      const eventDate = document.getElementById('evtDate').value;
+      const seatLimit = Number(document.getElementById('evtSeatLimit').value);
+      const venue = document.getElementById('evtVenue').value.trim();
+      const description = document.getElementById('evtDescription').value.trim();
+
+      setLoading(true, 'Submitting event proposal to administration...');
+      const res = await apiRequest('/events', {
+        method: 'POST',
+        body: { title, category, eventDate, seatLimit, venue, description }
+      });
+      setLoading(false);
+
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('createEventModal')).hide();
+        document.getElementById('createEventForm').reset();
+        loadOrganizerData();
+      } else {
+        showToast(res?.message || 'Failed to submit event', 'danger');
+      }
+    }
+
+    async function viewAttendees(eventId, title) {
+      document.getElementById('attendeesModalTitle').textContent = `Attendees: ${title}`;
+      const tbody = document.getElementById('attendeesTbody');
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Loading registered students...</td></tr>';
+
+      const modal = new bootstrap.Modal(document.getElementById('attendeesModal'));
+      modal.show();
+
+      const res = await apiRequest(`/events/${eventId}/registrations`);
+      if (res && res.success) {
+        const attendees = res.attendees || [];
+        document.getElementById('attendeesModalSubtitle').textContent = `Total confirmed: ${attendees.length} / Capacity: ${res.event.seatLimit}`;
+
+        if (attendees.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No students have registered for this event yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = attendees.map(a => `
+          <tr>
+            <td class="fw-semibold">${a.student?.name || 'N/A'}</td>
+            <td class="small text-muted">${a.student?.email || 'N/A'}</td>
+            <td><span class="badge bg-light text-dark">${a.student?.department?.name || 'General'}</span></td>
+            <td><code class="fw-bold">${a.ticketId}</code></td>
+            <td class="small">${formatDate(a.registeredAt)}</td>
+            <td>
+              ${a.isCheckedIn ? 
+                `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Checked In (${new Date(a.checkedInAt).toLocaleTimeString()})</span>` : 
+                '<span class="badge bg-secondary">Not Scanned</span>'}
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">${res?.message || 'Unable to load attendees'}</td></tr>`;
+      }
+    }
+
+    async function handleCheckin(e) {
+      e.preventDefault();
+      if (currentUser?.approvalStatus !== 'APPROVED') {
+        showToast('Venue check-in is restricted until your organizer account is approved by an admin.', 'warning');
+        return;
+      }
+
+      const ticketInput = document.getElementById('checkinTicketInput');
+      const ticketId = ticketInput.value.trim().toUpperCase();
+      const resultBox = document.getElementById('checkinResultBox');
+
+      setLoading(true, 'Verifying ticket with security database...');
+      const res = await apiRequest('/events/checkin', {
+        method: 'POST',
+        body: { ticketId }
+      });
+      setLoading(false);
+
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        resultBox.innerHTML = `
+          <div class="alert alert-success border-success p-3 mt-3 d-flex align-items-center gap-3">
+            <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+            <div>
+              <h5 class="fw-bold mb-0 text-success">Entry Permitted!</h5>
+              <div><strong>Student:</strong> ${res.student?.name} (${res.student?.email})</div>
+              <div><strong>Event:</strong> ${res.event?.title}</div>
+              <div class="small text-muted">Checked in at: ${new Date(res.ticket.checkedInAt).toLocaleTimeString()}</div>
+            </div>
+          </div>
+        `;
+        ticketInput.value = '';
+        ticketInput.focus();
+        loadOrganizerData();
+      } else {
+        showToast(res?.message || 'Verification failed', 'danger');
+        resultBox.innerHTML = `
+          <div class="alert alert-danger border-danger p-3 mt-3 d-flex align-items-center gap-3">
+            <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
+            <div>
+              <h5 class="fw-bold mb-0 text-danger">Entry Denied / Warning</h5>
+              <div>${res?.message || 'Invalid ticket pass.'}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (requireAuth(['organizer'])) {
+        loadOrganizerData();
+      }
+    });
+  </script>
+</body>
+</html>
